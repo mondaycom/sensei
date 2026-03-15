@@ -2,6 +2,7 @@
  * Scorer — calculates KPI scores and aggregates them into layer/overall scores.
  */
 
+import Ajv from 'ajv';
 import type {
   KPIDefinition,
   KPIResult,
@@ -11,6 +12,9 @@ import type {
   EvaluationLayer,
 } from './types.js';
 import { LAYER_WEIGHTS, determineBadge } from './types.js';
+
+// Singleton Ajv instance for JSON Schema validation (Fix #4)
+const ajv = new Ajv({ allErrors: true });
 
 // ─── Automated KPI Scoring ───────────────────────────────────────────
 
@@ -43,7 +47,41 @@ export function scoreAutomatedKPI(
       break;
     }
 
+    // Fix #4: Real JSON Schema validation using ajv.
+    // If config.expected contains a JSON Schema object, validates against it.
+    // If no schema is provided, falls back to checking if output is valid JSON.
     case 'json-schema': {
+      try {
+        const parsed = JSON.parse(agentOutput);
+        const schema = kpi.config.expected;
+        if (schema && typeof schema === 'object') {
+          // Validate against the provided JSON Schema
+          const validate = ajv.compile(schema as Record<string, unknown>);
+          const valid = validate(parsed);
+          if (valid) {
+            rawScore = maxScore;
+            evidence = 'Output is valid JSON and conforms to the provided schema';
+          } else {
+            rawScore = 0;
+            const errors = validate.errors
+              ?.map((e) => `${e.instancePath || '/'}: ${e.message}`)
+              .join('; ') ?? 'unknown validation error';
+            evidence = `Output is valid JSON but does not conform to schema: ${errors}`;
+          }
+        } else {
+          // No schema provided — fall back to JSON parse check only
+          rawScore = maxScore;
+          evidence = 'Output is valid JSON (no schema provided for validation)';
+        }
+      } catch {
+        rawScore = 0;
+        evidence = 'Output is not valid JSON';
+      }
+      break;
+    }
+
+    // Alias: json-parse only checks if output is valid JSON (no schema validation)
+    case 'json-parse': {
       try {
         JSON.parse(agentOutput);
         rawScore = maxScore;
