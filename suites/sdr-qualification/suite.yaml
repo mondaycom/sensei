@@ -94,7 +94,10 @@ scenarios:
         weight: 0.15
         method: automated
         config:
-          type: numeric-range
+          # Fix #1: Use word-count instead of numeric-range.
+          # numeric-range tried to parseFloat the entire email body → NaN → score 0.
+          # word-count counts words and checks if within the specified range.
+          type: word-count
           expected: { min: 50, max: 200 }
           tolerance: 20
 

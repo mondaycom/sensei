@@ -72,7 +72,7 @@ export type ScoringMethod = 'automated' | 'llm-judge' | 'comparative-judge';
 
 export interface KPIConfig {
   // For automated scoring
-  type?: 'contains' | 'regex' | 'json-schema' | 'function' | 'numeric-range';
+  type?: 'contains' | 'regex' | 'json-schema' | 'json-parse' | 'function' | 'numeric-range' | 'word-count';
   expected?: unknown;
   tolerance?: number;
 

@@ -73,6 +73,35 @@ export function scoreAutomatedKPI(
       break;
     }
 
+    // Fix #1: word-count scorer — counts words in agent output and checks against a range.
+    // This is what the 'brevity' KPI in the SDR suite needs (not numeric-range, which
+    // tried to parseFloat the entire email body and always got NaN).
+    case 'word-count': {
+      const expected = kpi.config.expected as { min?: number; max?: number } | undefined;
+      const wordCount = agentOutput.trim().split(/\s+/).filter(Boolean).length;
+      const min = expected?.min ?? 0;
+      const max = expected?.max ?? Infinity;
+      const tolerance = kpi.config.tolerance ?? 0;
+      const inRange = wordCount >= (min - tolerance) && wordCount <= (max + tolerance);
+      rawScore = inRange ? maxScore : 0;
+      evidence = inRange
+        ? `Word count ${wordCount} is within range [${min}, ${max}]${tolerance > 0 ? ` (±${tolerance} tolerance)` : ''}`
+        : `Word count ${wordCount} is outside range [${min}, ${max}]${tolerance > 0 ? ` (±${tolerance} tolerance)` : ''}`;
+      break;
+    }
+
+    // Fix #9: 'function' scorer — delegates to custom KPI functions registered via the SDK.
+    // If no function is registered for this KPI, returns 0 with a clear error.
+    case 'function': {
+      // Function scoring requires async and is handled by the runner/SDK layer.
+      // In the synchronous scoreAutomatedKPI path, we return 0 with guidance.
+      rawScore = 0;
+      evidence = `Function scorer type requires a registered custom KPI function. ` +
+        `Use @sensei/sdk registerKPI() to register a function for KPI "${kpi.id}", ` +
+        `then use the Runner's judgeScorer callback to invoke it.`;
+      break;
+    }
+
     default: {
       rawScore = 0;
       evidence = `Unknown automated scoring type: ${kpi.config.type}`;

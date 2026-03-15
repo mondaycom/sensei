@@ -9,7 +9,7 @@ import { z } from 'zod';
 
 export const KPIConfigSchema = z.object({
   // Automated scoring
-  type: z.enum(['contains', 'regex', 'json-schema', 'function', 'numeric-range']).optional(),
+  type: z.enum(['contains', 'regex', 'json-schema', 'json-parse', 'function', 'numeric-range', 'word-count']).optional(),
   expected: z.unknown().optional(),
   tolerance: z.number().optional(),
 
