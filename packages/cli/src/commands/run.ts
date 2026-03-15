@@ -4,7 +4,7 @@
 import { Command } from 'commander';
 import type { SuiteDefinition, JudgeConfig, AgentConfig, SuiteResult, KPIResult } from '@sensei/engine';
 import { Runner, Judge, Comparator, createAdapter, HttpAdapter, StdioAdapter, OpenClawAdapter } from '@sensei/engine';
-import { formatTerminalReport } from '../format.js';
+import { formatTerminalReport, formatHtmlReport } from '../format.js';
 import { loadSuiteFile } from '../loader.js';
 import { writeOutput } from '../output.js';
 
@@ -121,9 +121,17 @@ export function registerRunCommand(program: Command): void {
 
         const result = await runner.run(suite);
 
-        const output = format === 'json'
-          ? JSON.stringify(result, null, 2)
-          : formatTerminalReport(result);
+        let output: string;
+        switch (format) {
+          case 'json':
+            output = JSON.stringify(result, null, 2);
+            break;
+          case 'html':
+            output = formatHtmlReport(result);
+            break;
+          default:
+            output = formatTerminalReport(result);
+        }
 
         if (outputPath) {
           await writeOutput(outputPath, output);

@@ -23,11 +23,9 @@ function validateSuiteSchema(suite: Record<string, unknown>): ValidationError[] 
     errors.push({ path: 'version', message: 'Suite must have a string "version"' });
   }
 
-  // Agent config
+  // Agent config (optional — can be supplied via --target at runtime)
   const agent = suite.agent as Record<string, unknown> | undefined;
-  if (!agent || typeof agent !== 'object') {
-    errors.push({ path: 'agent', message: 'Suite must have an "agent" configuration' });
-  } else {
+  if (agent && typeof agent === 'object') {
     const validAdapters = ['http', 'stdio', 'openclaw', 'langchain'];
     if (!agent.adapter || !validAdapters.includes(agent.adapter as string)) {
       errors.push({ path: 'agent.adapter', message: `Adapter must be one of: ${validAdapters.join(', ')}` });
