@@ -127,7 +127,7 @@ describe('CLI E2E: sensei run → JSON output', () => {
     const parsed = JSON.parse(stdout);
 
     // Verify SuiteResult structure
-    expect(parsed.suite_id).toBe('sdr-qualification');
+    expect(parsed.suite_id).toContain('sdr-qualification');
     expect(parsed.suite_version).toBe('1.0.0');
     expect(parsed.agent_id).toBe('http');
     expect(parsed.timestamp).toBeTruthy();

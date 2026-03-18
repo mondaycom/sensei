@@ -28,7 +28,7 @@ export function isRetryableError(err: unknown): boolean {
     }
 
     // OpenAI SDK attaches status to the error object
-    const status = (err as Record<string, unknown>).status as number | undefined;
+    const status = (err as unknown as Record<string, unknown>).status as number | undefined;
     if (typeof status === 'number') {
       if (NON_RETRYABLE_STATUS_CODES.has(status)) return false;
       if (RETRYABLE_STATUS_CODES.has(status)) return true;

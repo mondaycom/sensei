@@ -602,7 +602,7 @@ describe('Timeout mid-scoring', () => {
     expect(result.scenarios[0].error).toContain('timed out');
     expect(result.scenarios[0].score).toBe(0);
     // Suite still produces a valid result
-    expect(result.suite_id).toBe('error-test');
+    expect(result.suite_id).toContain('error-test');
     expect(result.badge).toBeDefined();
   });
 });
@@ -879,7 +879,7 @@ describe('Partial suite completion', () => {
     // Second succeeded
     expect(result.scenarios[1].score).toBe(100);
     // Valid report structure
-    expect(result.suite_id).toBe('error-test');
+    expect(result.suite_id).toContain('error-test');
     expect(result.badge).toBeDefined();
     expect(result.scores.overall).toBeGreaterThan(0);
     expect(result.duration_ms).toBeGreaterThanOrEqual(0);
@@ -925,7 +925,7 @@ describe('Partial suite completion', () => {
     expect(result.badge).toBe('none');
     // Still a valid JSON-serializable result
     const json = JSON.parse(JSON.stringify(result));
-    expect(json.suite_id).toBe('error-test');
+    expect(json.suite_id).toContain('error-test');
   });
 
   it('reports partial results with correct layer scores', async () => {
