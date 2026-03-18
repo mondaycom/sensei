@@ -83,6 +83,8 @@ export class HttpAdapter implements AgentAdapter {
         };
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
+        // Classify network errors for clear diagnostics
+        lastError = classifyNetworkError(lastError, this.endpoint);
         if (attempt < this.maxRetries) {
           // Exponential back-off: 200ms, 400ms, 800ms
           await sleep(200 * Math.pow(2, attempt));
@@ -104,6 +106,40 @@ export class HttpAdapter implements AgentAdapter {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * Classify common network errors into clear, actionable messages.
+ * Handles connection resets, DNS failures, socket timeouts, and abort signals.
+ */
+export function classifyNetworkError(err: Error, endpoint: string): Error {
+  const msg = err.message || '';
+  const code = (err as NodeJS.ErrnoException).code ?? '';
+
+  if (code === 'ECONNRESET' || msg.includes('ECONNRESET')) {
+    return new Error(`Connection reset by ${endpoint} — the server closed the connection unexpectedly. Check if the agent is still running.`);
+  }
+  if (code === 'ENOTFOUND' || msg.includes('ENOTFOUND') || msg.includes('getaddrinfo')) {
+    const host = endpoint.replace(/^https?:\/\//, '').split(/[:/]/)[0];
+    return new Error(`DNS lookup failed for "${host}" — check the hostname in your endpoint URL (${endpoint}).`);
+  }
+  if (code === 'ETIMEDOUT' || msg.includes('ETIMEDOUT')) {
+    return new Error(`Socket connection timed out to ${endpoint} — the server may be unreachable or firewalled.`);
+  }
+  if (code === 'ECONNREFUSED' || msg.includes('ECONNREFUSED')) {
+    return new Error(`Connection refused by ${endpoint} — ensure the agent server is running and listening on the correct port.`);
+  }
+  if (err.name === 'AbortError' || msg.includes('aborted') || msg.includes('The operation was aborted')) {
+    return new Error(`Request to ${endpoint} timed out — the agent did not respond within the configured timeout.`);
+  }
+  if (code === 'EPIPE' || msg.includes('EPIPE')) {
+    return new Error(`Broken pipe to ${endpoint} — the connection was closed before the request completed.`);
+  }
+  if (code === 'UND_ERR_SOCKET' || msg.includes('socket hang up') || msg.includes('other side closed')) {
+    return new Error(`Socket hung up for ${endpoint} — the server terminated the connection mid-request.`);
+  }
+
+  return err;
 }
 
 registerAdapter('http', (config) => new HttpAdapter(config));

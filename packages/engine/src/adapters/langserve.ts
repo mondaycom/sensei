@@ -16,6 +16,7 @@
 
 import type { AgentAdapter, AgentConfig, AdapterInput, AdapterOutput } from '../types.js';
 import { registerAdapter } from './types.js';
+import { classifyNetworkError } from './http.js';
 
 export class LangServeAdapter implements AgentAdapter {
   readonly name = 'langserve';
@@ -131,6 +132,7 @@ export class LangServeAdapter implements AgentAdapter {
         };
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
+        lastError = classifyNetworkError(lastError, this.invokeUrl);
         if (attempt < this.maxRetries) {
           await sleep(200 * Math.pow(2, attempt));
         }

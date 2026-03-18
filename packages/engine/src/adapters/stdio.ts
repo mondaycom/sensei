@@ -24,6 +24,7 @@ export class StdioAdapter implements AgentAdapter {
   private proc: ChildProcess | null = null;
   private buffer = '';
   private pending: PendingRequest | null = null;
+  private stderrBuffer = '';
 
   constructor(private config: AgentConfig) {
     if (!config.command) {
@@ -46,13 +47,40 @@ export class StdioAdapter implements AgentAdapter {
       this.drainBuffer();
     });
 
-    this.proc.on('exit', (code) => {
+    // Capture stderr for diagnostics
+    this.proc.stderr!.on('data', (chunk: Buffer) => {
+      this.stderrBuffer += chunk.toString();
+      // Cap stderr buffer to avoid memory bloat
+      if (this.stderrBuffer.length > 10_000) {
+        this.stderrBuffer = this.stderrBuffer.slice(-5_000);
+      }
+    });
+
+    // Handle spawn errors (e.g., command not found)
+    this.proc.on('error', (err) => {
       if (this.pending) {
         clearTimeout(this.pending.timer);
         this.pending.resolve({
           response: '',
           duration_ms: Date.now() - this.pending.startTime,
-          error: `Child process exited unexpectedly with code ${code}`,
+          error: `Child process error: ${err.message}`,
+        });
+        this.pending = null;
+      }
+    });
+
+    this.proc.on('exit', (code, signal) => {
+      if (this.pending) {
+        clearTimeout(this.pending.timer);
+        const reason = signal
+          ? `killed by signal ${signal}`
+          : `exited with code ${code}`;
+        const stderr = this.stderrBuffer.trim();
+        const detail = stderr ? `\nStderr: ${stderr.slice(0, 500)}` : '';
+        this.pending.resolve({
+          response: '',
+          duration_ms: Date.now() - this.pending.startTime,
+          error: `Child process ${reason}${detail}`,
         });
         this.pending = null;
       }
@@ -125,10 +153,21 @@ export class StdioAdapter implements AgentAdapter {
   async disconnect(): Promise<void> {
     if (this.proc && this.proc.exitCode === null) {
       this.proc.kill('SIGTERM');
+      // SIGKILL fallback if process doesn't exit within 3s
+      const proc = this.proc;
+      const killTimer = setTimeout(() => {
+        try { if (proc.exitCode === null) proc.kill('SIGKILL'); } catch { /* already dead */ }
+      }, 3_000);
       this.proc = null;
+      // Clear the fallback timer if not needed (fire-and-forget cleanup)
+      proc.once('exit', () => clearTimeout(killTimer));
+    }
+    if (this.pending) {
+      clearTimeout(this.pending.timer);
+      this.pending = null;
     }
     this.buffer = '';
-    this.pending = null;
+    this.stderrBuffer = '';
   }
 }
 

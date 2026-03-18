@@ -9,7 +9,7 @@
 
 import { readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
-import { parse as parseYAML } from 'yaml';
+import { parse as parseYAML, YAMLParseError } from 'yaml';
 import { ZodError } from 'zod';
 import { SuiteDefinitionSchema } from './schema.js';
 import type { SuiteDefinition, ScenarioDefinition } from './types.js';
@@ -47,6 +47,12 @@ export class SuiteLoader {
     try {
       raw = parseYAML(content);
     } catch (err) {
+      // Extract line/column from yaml library's YAMLParseError for precise diagnostics
+      if (err instanceof YAMLParseError) {
+        const pos = err.linePos?.[0];
+        const location = pos ? ` at line ${pos.line}, column ${pos.col}` : '';
+        throw new Error(`Invalid YAML in "${label}"${location}: ${err.message}`);
+      }
       const message = err instanceof Error ? err.message : String(err);
       throw new Error(`Invalid YAML in "${label}": ${message}`);
     }
@@ -60,7 +66,13 @@ export class SuiteLoader {
     } catch (err) {
       if (err instanceof ZodError) {
         const issues = err.issues
-          .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
+          .map((i) => {
+            const path = i.path.length > 0 ? i.path.join('.') : '(root)';
+            const detail = i.code === 'invalid_type'
+              ? `expected ${(i as any).expected}, got ${(i as any).received}`
+              : i.message;
+            return `  - ${path}: ${detail}`;
+          })
           .join('\n');
         throw new Error(`Invalid suite definition in "${label}":\n${issues}`);
       }

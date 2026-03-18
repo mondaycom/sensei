@@ -105,6 +105,27 @@ export class Runner {
       const scenarioConcurrency = this.options.concurrency?.scenarios ?? DEFAULT_SCENARIO_CONCURRENCY;
       const semaphore = new Semaphore(scenarioConcurrency);
 
+      // Helper to run a scenario with error wrapping for partial suite completion
+      const runWithErrorCapture = async (scenario: ScenarioDefinition): Promise<ScenarioResult> => {
+        try {
+          return await this.runScenarioWithRetry(scenario, outputMap, suite);
+        } catch (unexpected) {
+          // Unexpected error — record it so the suite continues with remaining scenarios
+          const msg = unexpected instanceof Error ? unexpected.message : String(unexpected);
+          return {
+            scenario_id: scenario.id,
+            scenario_name: scenario.name,
+            layer: scenario.layer,
+            score: 0,
+            kpis: [],
+            duration_ms: 0,
+            agent_input: scenario.input.prompt,
+            agent_output: '',
+            error: `Unexpected error: ${msg}`,
+          };
+        }
+      };
+
       // Process by layer groups — scenarios within the same layer can run concurrently
       // (unless they have depends_on within the same layer, handled by outputMap wait)
       for (const layer of LAYER_ORDER) {
@@ -125,7 +146,7 @@ export class Runner {
                 progress: { completed: completedCount, total },
               });
 
-              const result = await this.runScenarioWithRetry(scenario, outputMap, suite);
+              const result = await runWithErrorCapture(scenario);
               outputMap.set(scenario.id, result.agent_output);
               completedCount++;
 
@@ -150,7 +171,7 @@ export class Runner {
               progress: { completed: completedCount, total },
             });
 
-            const r = await this.runScenarioWithRetry(scenario, outputMap, suite);
+            const r = await runWithErrorCapture(scenario);
             outputMap.set(scenario.id, r.agent_output);
             completedCount++;
 
@@ -167,7 +188,7 @@ export class Runner {
         }
       }
 
-      // Aggregate scores
+      // Aggregate scores — works even with partial results (failed scenarios score 0)
       const scores = calculateLayerScores(results);
       const badge = determineBadge(scores.overall);
 
@@ -267,41 +288,67 @@ export class Runner {
 
     // Send to agent
     const timeout = this.options.timeout_ms ?? suite.agent?.timeout_ms;
-    const output = await this.adapter.send({
-      prompt,
-      context: scenario.input.context,
-      timeout_ms: timeout,
-    });
+    let output: import('./types.js').AdapterOutput;
+    try {
+      output = await this.adapter.send({
+        prompt,
+        context: scenario.input.context,
+        timeout_ms: timeout,
+      });
+    } catch (sendErr) {
+      const msg = sendErr instanceof Error ? sendErr.message : String(sendErr);
+      throw new Error(`Adapter send failed: ${msg}`);
+    }
 
     if (output.error) {
       throw new Error(output.error);
     }
 
-    // Score each KPI
+    // Guard against malformed adapter responses (null, undefined, non-string)
+    if (output.response == null || typeof output.response !== 'string') {
+      output = { ...output, response: String(output.response ?? '') };
+    }
+
+    // Score each KPI — errors in individual KPIs don't fail the whole scenario
     const kpis: KPIResult[] = [];
     for (const kpiDef of scenario.kpis) {
       emit('scoring:started', { scenario_id: scenario.id, kpi_id: kpiDef.id });
 
       let kpiResult: KPIResult;
-      if (kpiDef.method === 'automated') {
-        kpiResult = scoreAutomatedKPI(kpiDef, output.response);
-      } else if (
-        kpiDef.method === 'comparative-judge' &&
-        this.options.comparatorScorer &&
-        scenario.depends_on
-      ) {
-        const originalOutput = outputMap.get(scenario.depends_on) ?? '';
-        kpiResult = await this.options.comparatorScorer(
-          kpiDef,
-          scenario.input.prompt,
-          scenario.input.feedback ?? '',
-          originalOutput,
-          output.response,
-        );
-      } else if (this.options.judgeScorer) {
-        kpiResult = await this.options.judgeScorer(kpiDef, output.response, prompt);
-      } else {
-        // No judge available — score 0 with explanation
+      try {
+        if (kpiDef.method === 'automated') {
+          kpiResult = scoreAutomatedKPI(kpiDef, output.response);
+        } else if (
+          kpiDef.method === 'comparative-judge' &&
+          this.options.comparatorScorer &&
+          scenario.depends_on
+        ) {
+          const originalOutput = outputMap.get(scenario.depends_on) ?? '';
+          kpiResult = await this.options.comparatorScorer(
+            kpiDef,
+            scenario.input.prompt,
+            scenario.input.feedback ?? '',
+            originalOutput,
+            output.response,
+          );
+        } else if (this.options.judgeScorer) {
+          kpiResult = await this.options.judgeScorer(kpiDef, output.response, prompt);
+        } else {
+          // No judge available — score 0 with explanation
+          kpiResult = {
+            kpi_id: kpiDef.id,
+            kpi_name: kpiDef.name,
+            score: 0,
+            raw_score: 0,
+            max_score: kpiDef.config.max_score ?? 10,
+            weight: kpiDef.weight,
+            method: kpiDef.method,
+            evidence: `No judge configured for ${kpiDef.method} scoring`,
+          };
+        }
+      } catch (kpiErr) {
+        // KPI scoring failed (e.g., judge timeout) — record error, don't crash scenario
+        const msg = kpiErr instanceof Error ? kpiErr.message : String(kpiErr);
         kpiResult = {
           kpi_id: kpiDef.id,
           kpi_name: kpiDef.name,
@@ -310,7 +357,7 @@ export class Runner {
           max_score: kpiDef.config.max_score ?? 10,
           weight: kpiDef.weight,
           method: kpiDef.method,
-          evidence: `No judge configured for ${kpiDef.method} scoring`,
+          evidence: `KPI scoring failed: ${msg}`,
         };
       }
 

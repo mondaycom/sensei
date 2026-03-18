@@ -16,6 +16,7 @@
 
 import type { AgentAdapter, AgentConfig, AdapterInput, AdapterOutput } from '../types.js';
 import { registerAdapter } from './types.js';
+import { classifyNetworkError } from './http.js';
 
 export class OpenAICompatAdapter implements AgentAdapter {
   readonly name = 'openai-compat';
@@ -152,6 +153,7 @@ export class OpenAICompatAdapter implements AgentAdapter {
         };
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
+        lastError = classifyNetworkError(lastError, this.endpoint);
         if (attempt < this.maxRetries) {
           await sleep(200 * Math.pow(2, attempt));
         }
