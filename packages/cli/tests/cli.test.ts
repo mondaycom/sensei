@@ -41,9 +41,10 @@ describe('CLI command parsing', () => {
   });
 
   it('shows version with --version', () => {
+    const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
     const { stdout, exitCode } = runCli(['--version']);
     expect(exitCode).toBe(0);
-    expect(stdout.trim()).toBe('0.0.1');
+    expect(stdout.trim()).toBe(pkg.version);
   });
 
   it('shows run command help', () => {
