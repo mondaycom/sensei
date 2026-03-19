@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Engine Core** (`@sensei/engine`)
+- **Engine Core** (`@mondaycom/sensei-engine`)
   - Zod schema for runtime validation of YAML suite definitions
   - Suite loader with YAML parsing, fixture resolution, and descriptive error messages
   - Automated KPI scorer: `contains`, `regex`, `json-schema`, `json-parse`, `numeric-range`, `word-count`, `function`
@@ -56,19 +56,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reporter with JSON and ANSI terminal output formats
   - Adapters: HTTP (with retry), Stdio (JSON-line protocol), OpenClaw (native)
   - Shared LLM client factory (`llm-client.ts`) supporting OpenAI + OpenAI-compatible providers
-- **CLI** (`@sensei/cli`)
+- **CLI** (`@mondaycom/sensei-cli`)
   - `sensei run` — execute suite against agent with configurable adapter/judge/timeout
   - `sensei validate` — validate suite YAML/JSON against Zod schema
   - `sensei init` — scaffold new suite template (interactive + non-interactive)
   - `sensei report` — render reports from previous JSON results
   - HTML report generator (self-contained dark theme)
-- **SDK** (`@sensei/sdk`)
+- **SDK** (`@mondaycom/sensei-sdk`)
   - `SuiteBuilder` fluent API for programmatic suite construction
   - `scenario()` and `kpi()` helper factories
   - `defineSuite()` passthrough helper
   - Custom KPI function registry (`registerKPI`, `getCustomKPI`, `listCustomKPIs`, `clearCustomKPIs`, `invokeKPI`)
   - Result utilities: `filterByLayer`, `compareResults`, `formatSummary`
-- **Monorepo** with npm workspaces: `@sensei/engine`, `@sensei/cli`, `@sensei/sdk`
+- **Monorepo** with npm workspaces: `@mondaycom/sensei-engine`, `@mondaycom/sensei-cli`, `@mondaycom/sensei-sdk`
 - **Test suites** — SDR qualification suite with fixtures (prospects, products, transcripts)
 - **173 tests** covering engine, CLI, SDK, and E2E flows
 - **CI/CD** — GitHub Actions workflows for CI (build + test) and npm publishing

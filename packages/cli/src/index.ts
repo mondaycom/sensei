@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @sensei/cli — CLI for Sensei agent qualification engine
+ * @mondaycom/sensei-cli — CLI for Sensei agent qualification engine
  */
 import { Command } from 'commander';
 import { createRequire } from 'node:module';

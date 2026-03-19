@@ -19,7 +19,7 @@ import {
   compareResults,
   formatSummary,
 } from '../src/result-utils.js';
-import type { SuiteResult } from '@sensei/engine';
+import type { SuiteResult } from '@mondaycom/sensei-engine';
 
 // ─── SuiteBuilder ───────────────────────────────────────────────────
 

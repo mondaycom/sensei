@@ -16,7 +16,7 @@ Sensei is a standalone, open-source agent qualification engine. It runs test sui
 ## Tech Stack
 
 - **Language:** TypeScript (Node.js)
-- **Package manager:** npm (published as `@sensei/cli`, `@sensei/engine`, `@sensei/sdk`)
+- **Package manager:** npm (published as `@mondaycom/sensei-cli`, `@mondaycom/sensei-engine`, `@mondaycom/sensei-sdk`)
 - **Test definition:** YAML (declarative) + TypeScript SDK (programmatic)
 - **LLM Judge:** OpenAI / any OpenAI-compatible API (Anthropic via proxy)
 - **Output:** JSON reports, HTML reports, terminal output
@@ -24,7 +24,7 @@ Sensei is a standalone, open-source agent qualification engine. It runs test sui
 
 ## Core Components
 
-### 1. Engine (`@sensei/engine`)
+### 1. Engine (`@mondaycom/sensei-engine`)
 
 The core library. No CLI, no HTTP — pure evaluation logic.
 
@@ -254,7 +254,7 @@ Response: { output: "..." } or { output: { content: "..." } }
 
 Features: Supports both string and object output formats, health check via `/input_schema`, retry with backoff.
 
-### 6. CLI (`@sensei/cli`)
+### 6. CLI (`@mondaycom/sensei-cli`)
 
 ```
 sensei run [options]
@@ -273,7 +273,7 @@ sensei report              Render a report from a previous JSON result
   --input <path>           Path to JSON result file
 ```
 
-### 7. SDK (`@sensei/sdk`)
+### 7. SDK (`@mondaycom/sensei-sdk`)
 
 Programmatic suite building and utilities.
 
@@ -385,8 +385,8 @@ scenarios:
 AgentTalent uses Sensei as a library dependency:
 
 ```typescript
-import { SuiteLoader, Runner, Judge, Comparator, createAdapter } from '@sensei/engine';
-import type { KPIResult } from '@sensei/engine';
+import { SuiteLoader, Runner, Judge, Comparator, createAdapter } from '@mondaycom/sensei-engine';
+import type { KPIResult } from '@mondaycom/sensei-engine';
 
 async function evaluateCandidate(agentUrl: string, suiteFile: string) {
   // Load the suite
@@ -444,7 +444,7 @@ async function evaluateCandidate(agentUrl: string, suiteFile: string) {
 ```
 sensei/
 ├── packages/
-│   ├── engine/                  # @sensei/engine
+│   ├── engine/                  # @mondaycom/sensei-engine
 │   │   ├── src/
 │   │   │   ├── types.ts         # Core types + LAYER_WEIGHTS + BADGE_THRESHOLDS
 │   │   │   ├── schema.ts        # Zod schemas (SuiteDefinitionSchema, etc.)
@@ -464,7 +464,7 @@ sensei/
 │   │   ├── tests/               # 100+ engine tests
 │   │   ├── package.json
 │   │   └── tsconfig.json
-│   ├── cli/                     # @sensei/cli
+│   ├── cli/                     # @mondaycom/sensei-cli
 │   │   ├── src/
 │   │   │   ├── index.ts         # Entry point (commander)
 │   │   │   ├── loader.ts        # Suite loader (YAML + JSON with Zod validation)
@@ -478,7 +478,7 @@ sensei/
 │   │   │       └── report.ts    # sensei report
 │   │   ├── tests/               # CLI + E2E tests
 │   │   └── package.json
-│   └── sdk/                     # @sensei/sdk
+│   └── sdk/                     # @mondaycom/sensei-sdk
 │       ├── src/
 │       │   ├── index.ts         # Public API exports
 │       │   ├── builder.ts       # SuiteBuilder + scenario() + kpi() helpers

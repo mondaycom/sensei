@@ -1,5 +1,5 @@
 /**
- * @sensei/sdk — Programmatic API for building Sensei suites
+ * @mondaycom/sensei-sdk — Programmatic API for building Sensei suites
  */
 
 // Re-export core types consumers need
@@ -17,9 +17,9 @@ export type {
   KPIResult,
   LayerScores,
   Badge,
-} from '@sensei/engine';
+} from '@mondaycom/sensei-engine';
 
-export { determineBadge, LAYER_WEIGHTS, BADGE_THRESHOLDS } from '@sensei/engine';
+export { determineBadge, LAYER_WEIGHTS, BADGE_THRESHOLDS } from '@mondaycom/sensei-engine';
 
 // SDK builders and utilities
 export { SuiteBuilder, defineSuite, scenario, kpi } from './builder.js';

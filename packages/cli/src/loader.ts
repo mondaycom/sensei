@@ -6,9 +6,9 @@
  */
 import { readFile } from 'node:fs/promises';
 import { extname } from 'node:path';
-import { SuiteLoader } from '@sensei/engine';
-import { SuiteDefinitionSchema } from '@sensei/engine';
-import type { SuiteDefinition } from '@sensei/engine';
+import { SuiteLoader } from '@mondaycom/sensei-engine';
+import { SuiteDefinitionSchema } from '@mondaycom/sensei-engine';
+import type { SuiteDefinition } from '@mondaycom/sensei-engine';
 
 const loader = new SuiteLoader();
 

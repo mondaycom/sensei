@@ -11,7 +11,7 @@ import type {
   AgentConfig,
   JudgeConfig,
   ScenarioInput,
-} from '@sensei/engine';
+} from '@mondaycom/sensei-engine';
 
 // ─── Helper factories ───────────────────────────────────────────────
 

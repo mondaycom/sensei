@@ -31,7 +31,7 @@ The most impactful contribution. Create a new suite for a professional role:
 ## Development Setup
 
 ```bash
-git clone https://github.com/nymeria-ai/sensei.git
+git clone https://github.com/mondaycom/sensei.git
 cd sensei
 npm install
 npm run build
@@ -57,29 +57,18 @@ npm test          # runs vitest across all packages
 - Comments for complex logic only
 - All new code should have corresponding tests
 
-## Changesets
+## Releases
 
-We use [changesets](https://github.com/changesets/changesets) to manage versioning and changelogs.
-
-When you make a user-facing change, add a changeset before opening your PR:
-
-```bash
-npx changeset
-```
-
-This will prompt you to select which packages are affected, the semver bump type, and a summary of the change. The generated markdown file in `.changeset/` should be committed with your PR.
-
-When your PR is merged to `main`, the Release workflow will automatically open a "Version Packages" PR that bumps versions and updates changelogs. Merging that PR publishes to npm and creates GitHub Releases.
+Releases are triggered manually by maintainers via **Actions → Release → Run workflow**. Select the bump type (`patch` / `minor` / `major`) and which packages to release. You don't need to do anything special in your PR to trigger a release.
 
 ## Pull Request Process
 
 1. Fork the repo
 2. Create a feature branch
 3. Make your changes
-4. Add a changeset: `npx changeset`
-5. Run tests: `npm test`
-6. Run build: `npm run build`
-7. Submit PR with clear description
+4. Run tests: `npm test`
+5. Run build: `npm run build`
+6. Submit PR with clear description
 
 ## License
 

@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { generateHtmlReport } from '../src/html-report.js';
-import type { SuiteResult } from '@sensei/engine';
+import type { SuiteResult } from '@mondaycom/sensei-engine';
 
 const mockResult: SuiteResult = {
   suite_id: 'sdr-qualification',

@@ -1,7 +1,7 @@
 /**
  * Report formatters — terminal and HTML output
  */
-import type { SuiteResult, Badge } from '@sensei/engine';
+import type { SuiteResult, Badge } from '@mondaycom/sensei-engine';
 import { generateHtmlReport } from './html-report.js';
 
 // ─── Badge display ──────────────────────────────────────────────────

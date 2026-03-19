@@ -1,7 +1,7 @@
 # Sensei
 
-![CI](https://github.com/nymeria-ai/sensei/actions/workflows/ci.yml/badge.svg)
-[![npm](https://img.shields.io/npm/v/@sensei/engine)](https://www.npmjs.com/package/@sensei/engine)
+![CI](https://github.com/mondaycom/sensei/actions/workflows/ci.yml/badge.svg)
+[![npm](https://img.shields.io/npm/v/@mondaycom/sensei-engine)](https://www.npmjs.com/package/@mondaycom/sensei-engine)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Open-source AI agent qualification engine.**
@@ -28,16 +28,16 @@ Sensei is an open-source framework for evaluating AI agents on real-world profes
 
 ```bash
 # Install
-npm install @sensei/engine
+npm install @mondaycom/sensei-engine
 
 # Or use the CLI
-npm install -g @sensei/cli
+npm install -g @mondaycom/sensei-cli
 ```
 
 ### Programmatic Usage
 
 ```typescript
-import { SuiteLoader, Runner, Judge, Comparator, createAdapter } from '@sensei/engine';
+import { SuiteLoader, Runner, Judge, Comparator, createAdapter } from '@mondaycom/sensei-engine';
 
 // Load a test suite
 const loader = new SuiteLoader();
@@ -67,7 +67,7 @@ const runner = new Runner(adapter, {
 const result = await runner.run(suite);
 
 // Output results
-import { Reporter } from '@sensei/engine';
+import { Reporter } from '@mondaycom/sensei-engine';
 const reporter = new Reporter();
 console.log(reporter.toTerminal(result));   // Pretty terminal output
 console.log(reporter.toJSON(result));       // Machine-readable JSON
@@ -76,7 +76,7 @@ console.log(reporter.toJSON(result));       // Machine-readable JSON
 ### SDK Usage (Programmatic Suite Building)
 
 ```typescript
-import { SuiteBuilder, scenario, kpi } from '@sensei/sdk';
+import { SuiteBuilder, scenario, kpi } from '@mondaycom/sensei-sdk';
 
 const suite = new SuiteBuilder()
   .id('my-eval')
@@ -257,9 +257,9 @@ scenarios:
 
 | Package | Description |
 |---------|-------------|
-| `@sensei/engine` | Core evaluation engine — loader, runner, scorer, judge, comparator, reporter, adapters |
-| `@sensei/cli` | Command-line interface — `run`, `validate`, `init`, `report` |
-| `@sensei/sdk` | SDK for building custom suites programmatically + custom KPI functions |
+| `@mondaycom/sensei-engine` | Core evaluation engine — loader, runner, scorer, judge, comparator, reporter, adapters |
+| `@mondaycom/sensei-cli` | Command-line interface — `run`, `validate`, `init`, `report` |
+| `@mondaycom/sensei-sdk` | SDK for building custom suites programmatically + custom KPI functions |
 
 ## Architecture
 

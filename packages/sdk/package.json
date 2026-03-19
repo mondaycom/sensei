@@ -1,6 +1,6 @@
 {
-  "name": "@sensei/sdk",
-  "version": "0.1.0",
+  "name": "@mondaycom/sensei-sdk",
+  "version": "0.0.1",
   "description": "SDK for building Sensei evaluation suites programmatically",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,10 @@
     "dev": "tsup src/index.ts --format esm,cjs --dts --watch"
   },
   "dependencies": {
-    "@sensei/engine": "*"
+    "@mondaycom/sensei-engine": "*"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

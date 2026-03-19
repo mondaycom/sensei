@@ -3,7 +3,7 @@
  */
 import { Command } from 'commander';
 import { readFile } from 'node:fs/promises';
-import type { SuiteResult } from '@sensei/engine';
+import type { SuiteResult } from '@mondaycom/sensei-engine';
 import { formatTerminalReport, formatHtmlReport } from '../format.js';
 import { writeOutput } from '../output.js';
 

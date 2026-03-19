@@ -123,8 +123,8 @@
 ## Integration Code (AgentTalent)
 
 ```typescript
-import { SuiteLoader, Runner, Judge, Comparator, createAdapter } from '@sensei/engine';
-import type { KPIResult } from '@sensei/engine';
+import { SuiteLoader, Runner, Judge, Comparator, createAdapter } from '@mondaycom/sensei-engine';
+import type { KPIResult } from '@mondaycom/sensei-engine';
 
 async function onAgentApply(application: Application) {
   // 1. Load the relevant suite

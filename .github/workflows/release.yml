@@ -1,38 +1,219 @@
 name: Release
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "patch: bug fixes (0.1.0→0.1.1) | minor: new features (0.1.0→0.2.0) | major: breaking changes (0.1.0→1.0.0)"
+        type: choice
+        default: "patch"
+        options:
+          - patch
+          - minor
+          - major
+      release_engine:
+        description: "Release @mondaycom/sensei-engine"
+        type: boolean
+        default: true
+      release_sdk:
+        description: "Release @mondaycom/sensei-sdk"
+        type: boolean
+        default: true
+      release_cli:
+        description: "Release @mondaycom/sensei-cli"
+        type: boolean
+        default: true
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   release:
-    name: Release
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-      pull-requests: write
-
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+          registry-url: "https://registry.npmjs.org"
 
       - run: npm install
-      - run: npm run build
 
-      - name: Create Release Pull Request or Publish to npm
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          title: "chore: version packages"
-          commit: "chore: version packages"
-          publish: npx changeset publish
+      - name: Validate selection
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          RELEASE_ENGINE: ${{ inputs.release_engine }}
+          RELEASE_SDK: ${{ inputs.release_sdk }}
+          RELEASE_CLI: ${{ inputs.release_cli }}
+        run: |
+          if [[ "$RELEASE_ENGINE" != "true" && \
+                "$RELEASE_SDK" != "true" && \
+                "$RELEASE_CLI" != "true" ]]; then
+            echo "::error::No packages selected for release"
+            exit 1
+          fi
+          if [[ "$RELEASE_ENGINE" != "true" ]]; then
+            if [[ "$RELEASE_SDK" == "true" || "$RELEASE_CLI" == "true" ]]; then
+              echo "::error::Cannot release sdk/cli without engine. Engine must be included to ensure dependency versions are correct."
+              exit 1
+            fi
+          fi
+
+      - name: Bump versions
+        id: versions
+        env:
+          BUMP: ${{ inputs.bump }}
+          RELEASE_ENGINE: ${{ inputs.release_engine }}
+          RELEASE_SDK: ${{ inputs.release_sdk }}
+          RELEASE_CLI: ${{ inputs.release_cli }}
+        run: |
+          if [[ "$RELEASE_ENGINE" == "true" ]]; then
+            cd packages/engine
+            NEW_VERSION=$(npm version "$BUMP" --no-git-tag-version | sed 's/^v//')
+            echo "engine_version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+            echo "Engine bumped to ${NEW_VERSION}"
+            cd ../..
+          fi
+
+          if [[ "$RELEASE_SDK" == "true" ]]; then
+            cd packages/sdk
+            NEW_VERSION=$(npm version "$BUMP" --no-git-tag-version | sed 's/^v//')
+            echo "sdk_version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+            echo "SDK bumped to ${NEW_VERSION}"
+            cd ../..
+          fi
+
+          if [[ "$RELEASE_CLI" == "true" ]]; then
+            cd packages/cli
+            NEW_VERSION=$(npm version "$BUMP" --no-git-tag-version | sed 's/^v//')
+            echo "cli_version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+            echo "CLI bumped to ${NEW_VERSION}"
+            cd ../..
+          fi
+
+      - name: Update lockfile
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npx vitest run
+
+      - name: Publish engine
+        if: inputs.release_engine == true
+        run: npm publish --workspace packages/engine --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish sdk
+        if: inputs.release_sdk == true
+        run: npm publish --workspace packages/sdk --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish cli
+        if: inputs.release_cli == true
+        run: npm publish --workspace packages/cli --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Commit and tag
+        env:
+          ENGINE_VERSION: ${{ steps.versions.outputs.engine_version }}
+          SDK_VERSION: ${{ steps.versions.outputs.sdk_version }}
+          CLI_VERSION: ${{ steps.versions.outputs.cli_version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add packages/*/package.json package-lock.json
+
+          MSG="release [skip ci]:"
+          TAGS=()
+
+          if [[ -n "$ENGINE_VERSION" ]]; then
+            MSG="${MSG} engine@${ENGINE_VERSION}"
+            TAGS+=("@mondaycom/sensei-engine@${ENGINE_VERSION}")
+          fi
+          if [[ -n "$SDK_VERSION" ]]; then
+            MSG="${MSG} sdk@${SDK_VERSION}"
+            TAGS+=("@mondaycom/sensei-sdk@${SDK_VERSION}")
+          fi
+          if [[ -n "$CLI_VERSION" ]]; then
+            MSG="${MSG} cli@${CLI_VERSION}"
+            TAGS+=("@mondaycom/sensei-cli@${CLI_VERSION}")
+          fi
+
+          git commit -m "${MSG}"
+
+          for TAG in "${TAGS[@]}"; do
+            git tag "${TAG}"
+          done
+
+          git push origin HEAD:main --tags --atomic
+
+      - name: Create GitHub Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENGINE_VERSION: ${{ steps.versions.outputs.engine_version }}
+          SDK_VERSION: ${{ steps.versions.outputs.sdk_version }}
+          CLI_VERSION: ${{ steps.versions.outputs.cli_version }}
+        run: |
+          LAST_TAG=""
+
+          if [[ -n "$ENGINE_VERSION" ]]; then
+            LAST_TAG="@mondaycom/sensei-engine@${ENGINE_VERSION}"
+            gh release create "$LAST_TAG" \
+              --title "sensei-engine ${ENGINE_VERSION}" \
+              --generate-notes \
+              --latest=false
+          fi
+          if [[ -n "$SDK_VERSION" ]]; then
+            LAST_TAG="@mondaycom/sensei-sdk@${SDK_VERSION}"
+            gh release create "$LAST_TAG" \
+              --title "sensei-sdk ${SDK_VERSION}" \
+              --generate-notes \
+              --latest=false
+          fi
+          if [[ -n "$CLI_VERSION" ]]; then
+            LAST_TAG="@mondaycom/sensei-cli@${CLI_VERSION}"
+            gh release create "$LAST_TAG" \
+              --title "sensei-cli ${CLI_VERSION}" \
+              --generate-notes \
+              --latest=false
+          fi
+
+          # Mark the last release as "Latest"
+          if [[ -n "$LAST_TAG" ]]; then
+            gh release edit "$LAST_TAG" --latest
+          fi
+
+      - name: Summary
+        if: always()
+        env:
+          ENGINE_VERSION: ${{ steps.versions.outputs.engine_version }}
+          SDK_VERSION: ${{ steps.versions.outputs.sdk_version }}
+          CLI_VERSION: ${{ steps.versions.outputs.cli_version }}
+        run: |
+          echo "## Release Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Package | Version |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---------|---------|" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -n "$ENGINE_VERSION" ]]; then
+            echo "| @mondaycom/sensei-engine | ${ENGINE_VERSION} |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [[ -n "$SDK_VERSION" ]]; then
+            echo "| @mondaycom/sensei-sdk | ${SDK_VERSION} |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [[ -n "$CLI_VERSION" ]]; then
+            echo "| @mondaycom/sensei-cli | ${CLI_VERSION} |" >> "$GITHUB_STEP_SUMMARY"
+          fi

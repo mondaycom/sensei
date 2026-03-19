@@ -1,7 +1,7 @@
 /**
  * Self-contained HTML report generator — dark theme
  */
-import type { SuiteResult, ScenarioResult, KPIResult, Badge } from '@sensei/engine';
+import type { SuiteResult, ScenarioResult, KPIResult, Badge } from '@mondaycom/sensei-engine';
 
 function esc(text: string): string {
   return text

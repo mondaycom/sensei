@@ -1,8 +1,8 @@
 /**
  * Result utilities — filter, compare, and summarize suite results
  */
-import type { SuiteResult, ScenarioResult, EvaluationLayer, Badge } from '@sensei/engine';
-import { determineBadge } from '@sensei/engine';
+import type { SuiteResult, ScenarioResult, EvaluationLayer, Badge } from '@mondaycom/sensei-engine';
+import { determineBadge } from '@mondaycom/sensei-engine';
 
 /**
  * Filter scenarios by evaluation layer

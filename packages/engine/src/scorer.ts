@@ -165,7 +165,7 @@ export function scoreAutomatedKPI(
       // In the synchronous scoreAutomatedKPI path, we return 0 with guidance.
       rawScore = 0;
       evidence = `Function scorer type requires a registered custom KPI function. ` +
-        `Use @sensei/sdk registerKPI() to register a function for KPI "${kpi.id}", ` +
+        `Use @mondaycom/sensei-sdk registerKPI() to register a function for KPI "${kpi.id}", ` +
         `then use the Runner's judgeScorer callback to invoke it.`;
       break;
     }
