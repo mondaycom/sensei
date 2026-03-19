@@ -57,29 +57,18 @@ npm test          # runs vitest across all packages
 - Comments for complex logic only
 - All new code should have corresponding tests
 
-## Changesets
+## Releases
 
-We use [changesets](https://github.com/changesets/changesets) to manage versioning and changelogs.
-
-When you make a user-facing change, add a changeset before opening your PR:
-
-```bash
-npx changeset
-```
-
-This will prompt you to select which packages are affected, the semver bump type, and a summary of the change. The generated markdown file in `.changeset/` should be committed with your PR.
-
-Releases are triggered manually via the GitHub Actions `Release` workflow (`workflow_dispatch`). Select which packages to release and the bump type (patch/minor/major).
+Releases are triggered manually by maintainers via **Actions → Release → Run workflow**. Select the bump type (`patch` / `minor` / `major`) and which packages to release. You don't need to do anything special in your PR to trigger a release.
 
 ## Pull Request Process
 
 1. Fork the repo
 2. Create a feature branch
 3. Make your changes
-4. Add a changeset: `npx changeset`
-5. Run tests: `npm test`
-6. Run build: `npm run build`
-7. Submit PR with clear description
+4. Run tests: `npm test`
+5. Run build: `npm run build`
+6. Submit PR with clear description
 
 ## License
 
