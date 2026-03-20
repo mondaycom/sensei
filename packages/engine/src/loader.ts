@@ -7,11 +7,13 @@
  * instead of file paths.
  */
 
-import { readFile } from 'node:fs/promises';
-import { resolve, dirname } from 'node:path';
+import { readFile, access } from 'node:fs/promises';
+import { resolve, dirname, join } from 'node:path';
+import { homedir } from 'node:os';
 import { parse as parseYAML, YAMLParseError } from 'yaml';
 import { ZodError } from 'zod';
 import { SuiteDefinitionSchema } from './schema.js';
+import { RegistryClient } from './registry-client.js';
 import type { SuiteDefinition, ScenarioDefinition, ScenarioEntry, ScenarioPool } from './types.js';
 
 export class SuiteLoader {
@@ -37,6 +39,37 @@ export class SuiteLoader {
     await this.resolveFixtures(suite, suiteDir);
 
     return suite;
+  }
+
+  /**
+   * Resolve a suite from a slug by checking multiple sources:
+   * 1. Local ./suites/<slug>/suite.yaml
+   * 2. Global ~/.sensei/suites/<slug>/suite.yaml
+   * 3. Fallback: download from marketplace registry
+   */
+  async resolveFromSlug(slug: string): Promise<SuiteDefinition> {
+    // 1. Check local suites directory
+    const localPath = resolve(`./suites/${slug}/suite.yaml`);
+    try {
+      await access(localPath);
+      return this.loadFile(localPath);
+    } catch {
+      // not found locally, continue
+    }
+
+    // 2. Check global suites directory
+    const globalPath = join(homedir(), '.sensei', 'suites', slug, 'suite.yaml');
+    try {
+      await access(globalPath);
+      return this.loadFile(globalPath);
+    } catch {
+      // not found globally, continue
+    }
+
+    // 3. Fallback: download from marketplace
+    const client = new RegistryClient();
+    const yaml = await client.download(slug);
+    return this.loadString(yaml, `marketplace:${slug}`);
   }
 
   /**

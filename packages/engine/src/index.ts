@@ -7,7 +7,11 @@ export { Runner } from './runner.js';
 export type { RunnerOptions } from './runner.js';
 export { Scorer } from './scorer.js';
 export { Reporter } from './reporter.js';
-export { SuiteDefinitionSchema, SuiteDefinitionSchema as suiteSchema, ScenarioPoolSchema, ScenarioEntrySchema } from './schema.js';
+export { SuiteDefinitionSchema, SuiteDefinitionSchema as suiteSchema, ScenarioPoolSchema, ScenarioEntrySchema, MarketplaceSchema } from './schema.js';
+
+// Registry client
+export { RegistryClient, DEFAULT_REGISTRY_URL } from './registry-client.js';
+export type { SearchResult, SuiteInfo, PublishMetadata, PublishResult } from './registry-client.js';
 
 // Concurrency
 export { Semaphore } from './semaphore.js';

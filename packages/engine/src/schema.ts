@@ -104,6 +104,13 @@ export const SuiteDefaultsSchema = z.object({
   judge_model: z.string().optional(),
 }).optional();
 
+// Optional marketplace metadata for published suites
+export const MarketplaceSchema = z.object({
+  slug: z.string().min(1),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+}).optional();
+
 export const SuiteDefinitionSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -113,6 +120,7 @@ export const SuiteDefinitionSchema = z.object({
   agent: AgentConfigSchema.optional(),
   judge: JudgeConfigSchema.optional(),
   defaults: SuiteDefaultsSchema,
+  marketplace: MarketplaceSchema,
   scenarios: z.array(ScenarioEntrySchema).min(1),
   metadata: z.record(z.unknown()).optional(),
 });

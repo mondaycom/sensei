@@ -5,6 +5,12 @@
 
 // ─── Suite Definition ────────────────────────────────────────────────
 
+export interface MarketplaceMetadata {
+  slug: string;
+  category?: string;
+  tags?: string[];
+}
+
 export interface SuiteDefinition {
   id: string;
   name: string;
@@ -13,6 +19,7 @@ export interface SuiteDefinition {
   description?: string;
   agent?: AgentConfig;
   judge?: JudgeConfig;
+  marketplace?: MarketplaceMetadata;
   scenarios: ScenarioDefinition[];
   metadata?: Record<string, unknown>;
 }

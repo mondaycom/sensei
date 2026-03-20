@@ -114,6 +114,51 @@ sensei init my-suite
 sensei report --input ./result.json
 ```
 
+## Suite Marketplace
+
+The [Sensei Suite Marketplace](https://sensei.sh/marketplace) is a community hub for discovering, sharing, and installing evaluation suites.
+
+### Search for suites
+
+```bash
+# Search by keyword
+sensei search "sdr"
+
+# Filter by category and sort by rating
+sensei search "sales" --category sales --sort rating --limit 5
+```
+
+### Install a suite
+
+```bash
+# Install to local ./suites/ directory
+sensei install sdr-qualification
+
+# Install globally to ~/.sensei/suites/
+sensei install sdr-qualification --global
+
+# Install to a custom path
+sensei install sdr-qualification --output ./my-suites/sdr.yaml
+```
+
+After installing, run the suite against your agent:
+
+```bash
+sensei run --suite ./suites/sdr-qualification/suite.yaml --target http://localhost:3000
+```
+
+### Publish a suite
+
+```bash
+# Publish suite.yaml from current directory
+sensei publish --api-key <your-key>
+
+# Publish a specific file with metadata overrides
+sensei publish --file ./my-suite.yaml --name "My Suite" --category sales --tags "sdr,cold-email"
+```
+
+You can also set the `SENSEI_API_KEY` environment variable instead of passing `--api-key` each time.
+
 ## Three-Layer Evaluation
 
 <p align="center">
@@ -258,7 +303,7 @@ scenarios:
 | Package | Description |
 |---------|-------------|
 | `@mondaycom/sensei-engine` | Core evaluation engine — loader, runner, scorer, judge, comparator, reporter, adapters |
-| `@mondaycom/sensei-cli` | Command-line interface — `run`, `validate`, `init`, `report` |
+| `@mondaycom/sensei-cli` | Command-line interface — `run`, `validate`, `init`, `report`, `install`, `search`, `publish` |
 | `@mondaycom/sensei-sdk` | SDK for building custom suites programmatically + custom KPI functions |
 
 ## Architecture
@@ -275,6 +320,7 @@ packages/
 │   ├── comparator.ts     # Before/after comparative evaluation
 │   ├── reporter.ts       # JSON + ANSI terminal output
 │   ├── llm-client.ts     # Shared OpenAI-compatible client factory
+│   ├── registry-client.ts # Marketplace registry API client
 │   └── adapters/
 │       ├── types.ts      # Adapter registry + factory
 │       ├── http.ts       # HTTP POST adapter
@@ -291,7 +337,10 @@ packages/
 │       ├── run.ts        # sensei run — execute suite against agent
 │       ├── validate.ts   # sensei validate — check suite YAML
 │       ├── init.ts       # sensei init — scaffold new suite
-│       └── report.ts     # sensei report — render from JSON result
+│       ├── report.ts     # sensei report — render from JSON result
+│       ├── install.ts    # sensei install — download suite from marketplace
+│       ├── search.ts     # sensei search — search marketplace suites
+│       └── publish.ts    # sensei publish — publish suite to marketplace
 └── sdk/src/
     ├── index.ts          # Public API exports
     ├── builder.ts        # SuiteBuilder fluent API + helpers
@@ -356,7 +405,7 @@ Built-in adapters:
 - [x] CI/CD workflows
 - [ ] Additional test suites (Support, Content, QA, Data, Developer)
 - [ ] Web dashboard
-- [ ] Community suite marketplace
+- [x] Community suite marketplace (`install`, `search`, `publish` CLI commands)
 - [ ] npm publish to registry
 
 ## Contributing

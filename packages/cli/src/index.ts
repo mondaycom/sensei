@@ -8,6 +8,9 @@ import { registerRunCommand } from './commands/run.js';
 import { registerInitCommand } from './commands/init.js';
 import { registerReportCommand } from './commands/report.js';
 import { registerValidateCommand } from './commands/validate.js';
+import { registerInstallCommand } from './commands/install.js';
+import { registerSearchCommand } from './commands/search.js';
+import { registerPublishCommand } from './commands/publish.js';
 
 const require = createRequire(import.meta.url);
 const { version } = require('../package.json') as { version: string };
@@ -27,5 +30,8 @@ registerRunCommand(program);
 registerInitCommand(program);
 registerReportCommand(program);
 registerValidateCommand(program);
+registerInstallCommand(program);
+registerSearchCommand(program);
+registerPublishCommand(program);
 
 program.parse(process.argv);
