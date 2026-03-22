@@ -1,6 +1,6 @@
 {
   "name": "@mondaycom/sensei-cli",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "CLI for Sensei agent qualification engine",
   "type": "module",
   "bin": {
