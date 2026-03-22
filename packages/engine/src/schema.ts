@@ -96,6 +96,16 @@ export const JudgeConfigSchema = z.object({
   multi_judge: z.boolean().optional(),
 });
 
+// ─── Evaluation Config ───────────────────────────────────────────────
+
+export const EvaluationConfigSchema = z.object({
+  scenarios_per_layer: z.object({
+    execution: z.number().int().min(1).optional(),
+    reasoning: z.number().int().min(1).optional(),
+    'self-improvement': z.number().int().min(1).optional(),
+  }).optional(),
+}).optional();
+
 // ─── Suite Definition ────────────────────────────────────────────────
 
 // M13: Suite-level defaults that apply to all scenarios
@@ -119,6 +129,7 @@ export const SuiteDefinitionSchema = z.object({
   description: z.string().optional(),
   agent: AgentConfigSchema.optional(),
   judge: JudgeConfigSchema.optional(),
+  evaluation: EvaluationConfigSchema,
   defaults: SuiteDefaultsSchema,
   marketplace: MarketplaceSchema,
   scenarios: z.array(ScenarioEntrySchema).min(1),

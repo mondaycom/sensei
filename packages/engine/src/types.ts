@@ -11,6 +11,23 @@ export interface MarketplaceMetadata {
   tags?: string[];
 }
 
+/**
+ * Controls how many scenarios are picked per evaluation layer.
+ *
+ * Example:
+ *   scenarios_per_layer:
+ *     execution: 1        # pick 1 random from execution scenarios
+ *     reasoning: 1        # pick 1 random from reasoning scenarios
+ *     # self-improvement omitted → all self-improvement scenarios included
+ *
+ * If `scenarios_per_layer` is omitted entirely, ALL scenarios run.
+ * If a layer is omitted from the map, ALL scenarios for that layer are included.
+ * Order follows the YAML definition order.
+ */
+export interface EvaluationConfig {
+  scenarios_per_layer?: Partial<Record<EvaluationLayer, number>>;
+}
+
 export interface SuiteDefinition {
   id: string;
   name: string;
@@ -19,6 +36,7 @@ export interface SuiteDefinition {
   description?: string;
   agent?: AgentConfig;
   judge?: JudgeConfig;
+  evaluation?: EvaluationConfig;
   marketplace?: MarketplaceMetadata;
   scenarios: ScenarioDefinition[];
   metadata?: Record<string, unknown>;

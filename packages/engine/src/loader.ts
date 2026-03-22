@@ -14,7 +14,7 @@ import { parse as parseYAML, YAMLParseError } from 'yaml';
 import { ZodError } from 'zod';
 import { SuiteDefinitionSchema } from './schema.js';
 import { RegistryClient } from './registry-client.js';
-import type { SuiteDefinition, ScenarioDefinition, ScenarioEntry, ScenarioPool } from './types.js';
+import type { SuiteDefinition, ScenarioDefinition, ScenarioEntry, ScenarioPool, EvaluationLayer } from './types.js';
 
 export class SuiteLoader {
   /**
@@ -238,4 +238,64 @@ export function resolvePools(suite: { scenarios: ScenarioEntry[] }): void {
   }
 
   (suite as any).scenarios = resolved;
+}
+
+// ─── Layer-Based Scenario Selection ─────────────────────────────────
+
+/**
+ * Pick scenarios from a suite respecting the `evaluation.scenarios_per_layer` config.
+ *
+ * Behavior:
+ * - If `evaluation.scenarios_per_layer` is not defined, ALL scenarios are returned.
+ * - If a layer is omitted from the map, ALL scenarios for that layer are included.
+ * - If a layer has a count, that many are randomly picked from that layer's scenarios.
+ * - Order follows the original YAML definition order.
+ *
+ * @param suite  A suite definition (pools should already be resolved)
+ * @param seed   Optional seed for deterministic random selection
+ * @returns      Selected scenarios in YAML definition order
+ */
+export function pickScenariosByLayer(
+  suite: SuiteDefinition,
+  seed?: number,
+): ScenarioDefinition[] {
+  const config = suite.evaluation?.scenarios_per_layer;
+
+  // No config → return all scenarios as-is
+  if (!config) {
+    return [...suite.scenarios];
+  }
+
+  // Group scenarios by layer, preserving original order via index
+  const byLayer = new Map<EvaluationLayer, { index: number; scenario: ScenarioDefinition }[]>();
+  for (let i = 0; i < suite.scenarios.length; i++) {
+    const s = suite.scenarios[i];
+    if (!byLayer.has(s.layer)) byLayer.set(s.layer, []);
+    byLayer.get(s.layer)!.push({ index: i, scenario: s });
+  }
+
+  const rand = seed != null ? mulberry32(seed) : Math.random.bind(Math);
+  const selected: { index: number; scenario: ScenarioDefinition }[] = [];
+
+  for (const [layer, entries] of byLayer) {
+    const limit = config[layer];
+
+    if (limit === undefined) {
+      // Layer not in config → include all
+      selected.push(...entries);
+    } else {
+      const count = Math.min(limit, entries.length);
+      if (limit > entries.length) {
+        console.warn(
+          `scenarios_per_layer.${layer}: requested ${limit} but only ${entries.length} available, using all`,
+        );
+      }
+      const shuffled = shuffle(entries, rand);
+      selected.push(...shuffled.slice(0, count));
+    }
+  }
+
+  // Sort by original YAML index to preserve definition order
+  selected.sort((a, b) => a.index - b.index);
+  return selected.map((e) => e.scenario);
 }

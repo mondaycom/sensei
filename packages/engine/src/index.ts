@@ -2,12 +2,12 @@
 export * from './types.js';
 
 // Engine modules (Agent A)
-export { SuiteLoader, resolvePools } from './loader.js';
+export { SuiteLoader, resolvePools, pickScenariosByLayer } from './loader.js';
 export { Runner } from './runner.js';
 export type { RunnerOptions } from './runner.js';
 export { Scorer } from './scorer.js';
 export { Reporter } from './reporter.js';
-export { SuiteDefinitionSchema, SuiteDefinitionSchema as suiteSchema, ScenarioPoolSchema, ScenarioEntrySchema, MarketplaceSchema } from './schema.js';
+export { SuiteDefinitionSchema, SuiteDefinitionSchema as suiteSchema, ScenarioPoolSchema, ScenarioEntrySchema, MarketplaceSchema, EvaluationConfigSchema } from './schema.js';
 
 // Registry client
 export { RegistryClient, DEFAULT_REGISTRY_URL } from './registry-client.js';

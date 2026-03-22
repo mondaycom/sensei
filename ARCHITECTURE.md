@@ -147,6 +147,48 @@ Badge:
   none   < 60
 ```
 
+### Layer-Based Scenario Selection
+
+Suites can define an optional `evaluation.scenarios_per_layer` config to control how many scenarios are randomly selected per layer. This is useful when a suite has multiple scenarios per layer and you want to keep evaluations concise.
+
+**Rules:**
+- If `evaluation` is omitted → ALL scenarios run (backwards compatible)
+- If a layer is omitted from `scenarios_per_layer` → all scenarios for that layer are included
+- If a layer has a count → that many are randomly picked from that layer
+- Selection order follows the YAML definition order (not hardcoded)
+- Use `seed` parameter for deterministic/reproducible picks
+
+```typescript
+import { pickScenariosByLayer } from '@mondaycom/sensei-engine';
+
+// Pick scenarios respecting suite's evaluation config
+const selected = pickScenariosByLayer(suite);
+
+// Deterministic selection with seed
+const selected = pickScenariosByLayer(suite, 42);
+```
+
+**Example YAML configs:**
+
+```yaml
+# Pick 1 from each layer (concise evaluation)
+evaluation:
+  scenarios_per_layer:
+    execution: 1
+    reasoning: 1
+    self-improvement: 1
+
+# Pick 2 execution, 1 reasoning, all self-improvement
+evaluation:
+  scenarios_per_layer:
+    execution: 2
+    reasoning: 1
+    # self-improvement omitted → all included
+
+# No evaluation config → all scenarios run
+# (just don't include the evaluation key)
+```
+
 ### 2. LLM Judge (`judge.ts`)
 
 For KPIs that can't be measured automatically (e.g., "Is this email personalized?"), we use an LLM as judge.
@@ -319,6 +361,17 @@ judge:
 defaults:
   timeout_ms: 60000
   judge_model: gpt-4o
+
+# Layer-based scenario selection (optional)
+# Controls how many scenarios are randomly picked per evaluation layer.
+# Omit entirely → all scenarios run.
+# Omit a layer → all scenarios for that layer are included.
+# Order follows YAML definition order.
+evaluation:
+  scenarios_per_layer:
+    execution: 1          # pick 1 random from execution scenarios
+    reasoning: 1          # pick 1 random from reasoning scenarios
+    # self-improvement: omitted → all self-improvement scenarios included
 
 scenarios:
   - id: cold-email
